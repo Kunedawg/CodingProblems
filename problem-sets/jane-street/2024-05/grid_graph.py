@@ -61,9 +61,7 @@ class GridGraph:
     def _are_adjacent(self, cell1, cell2):
         r1, c1 = cell1
         r2, c2 = cell2
-        return (abs(r1 - r2) == 1 and c1 == c2) or (
-            abs(c1 - c2) == 1 and r1 == r2
-        )
+        return abs(r1 - r2) + abs(c1 - c2) == 1
 
     def find_all_regions(self):
         visited = set()
@@ -119,15 +117,25 @@ class GridGraph:
             (r, c): (c, -r) for r in range(self.rows) for c in range(self.cols)
         }
 
+        # Create labels for nodes based on their data
+        labels = {cell: self.get_cell_data(cell) for cell in G.nodes}
+
+        # Create a list of colors based on the data
+        node_color = [
+            "black" if self.get_cell_data(cell) == 10 else "lightblue"
+            for cell in G.nodes
+        ]
+
         plt.figure(figsize=(8, 8))
         nx.draw(
             G,
             pos,
+            labels=labels,
             with_labels=True,
             node_size=500,
-            node_color="lightblue",
+            node_color=node_color,
             font_size=10,
-            font_color="black",
+            font_color="white" if self.get_cell_data(cell) == 10 else "black",
         )
         plt.show()
 
@@ -149,15 +157,21 @@ class GridGraph:
         plt.show()
 
     def set_cell_data(self, cell, data):
-        if cell in self.data:
-            self.data[cell] = data
-        else:
+        try:
+            if data is None or (isinstance(data, int) and 0 <= data <= 10):
+                self.data[cell] = data
+            else:
+                raise ValueError(
+                    f"Data {data} is not a valid value. Must be None or a \
+                    integer between 0 and 10."
+                )
+        except KeyError:
             raise ValueError(f"Cell {cell} is out of bounds.")
 
     def get_cell_data(self, cell):
-        if cell in self.data:
+        try:
             return self.data[cell]
-        else:
+        except KeyError:
             raise ValueError(f"Cell {cell} is out of bounds.")
 
     def create_subset(self, start_cell, subset_rows, subset_cols):
@@ -187,3 +201,13 @@ class GridGraph:
                     subset.add_edge(subset_cell, (r, c + 1))
 
         return subset
+
+    def apply_mask(self, mask):
+        for r, row_mask in enumerate(mask):
+            for c, char in enumerate(row_mask):
+                if char == "1":
+                    cell = (r, c)
+                    self.set_cell_data(cell, 10)
+                    # Remove all edges for this cell
+                    for neighbor in self.neighbors(cell).copy():
+                        self.remove_edge(cell, neighbor)

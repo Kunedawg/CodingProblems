@@ -1,19 +1,25 @@
 from grid_graph import GridGraph
 
-# Using a filename
-graph = GridGraph(filename="graph5x5.txt")
+
+# Usage example
+grid_graph = GridGraph(filename="graph5x5.txt")
+
+
+# Apply mask
+mask = ["00000", "00001", "00000", "00000", "00000"]
+grid_graph.apply_mask(mask)
+
+# Visualize the graph
+grid_graph.visualize()
+
 
 # get subset
-
-sub_graph = graph.create_subset((1, 0), 1, 5)
+sub_graph = grid_graph.create_subset((1, 0), 1, 5)
 
 # Visualize the grid
-graph.visualize()
 sub_graph.visualize()
 
 
-# Find and visualize region adjacency graph
-region_graph = graph.find_region_adjacency()
-graph.visualize_regions(region_graph)
-
-print(sub_graph.adj_list)
+# Find and visualize region adjacency grid_graph
+region_graph = grid_graph.find_region_adjacency()
+grid_graph.visualize_regions(region_graph)
