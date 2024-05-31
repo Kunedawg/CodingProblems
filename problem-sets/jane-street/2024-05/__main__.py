@@ -6,7 +6,6 @@ import os
 from functools import lru_cache
 import multiprocessing
 from multiprocessing import Manager, Pool
-import itertools
 
 
 def generate_masks(n):
@@ -275,7 +274,9 @@ def read_file_generator(file_path):
 
 
 def generate_combinations(file1_path, file2_path):
-    """Generates all combinations of selecting one row from each file in a streaming manner."""
+    """Generates all combinations of selecting one row from each file in
+    a streaming manner.
+    """
     file1_gen = read_file_generator(file1_path)
     file2_gen = list(
         read_file_generator(file2_path)
