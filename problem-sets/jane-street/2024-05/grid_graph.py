@@ -118,13 +118,28 @@ class GridGraph:
         }
 
         # Create labels for nodes based on their data
-        labels = {cell: self.get_cell_data(cell) for cell in G.nodes}
+        labels = {
+            cell: f"{cell}\n{self.get_cell_data(cell)}" for cell in G.nodes
+        }
+
+        # Define unique colors for each number
+        colors = {
+            None: "lightgrey",  # Unassigned
+            0: "lightblue",
+            1: "lightgreen",
+            2: "lightcoral",
+            3: "lightsalmon",
+            4: "lightseagreen",
+            5: "lightskyblue",
+            6: "lightsteelblue",
+            7: "lightpink",
+            8: "lightgoldenrodyellow",
+            9: "lightcyan",
+            10: "black",  # Isolated cell
+        }
 
         # Create a list of colors based on the data
-        node_color = [
-            "black" if self.get_cell_data(cell) == 10 else "lightblue"
-            for cell in G.nodes
-        ]
+        node_color = [colors[self.get_cell_data(cell)] for cell in G.nodes]
 
         plt.figure(figsize=(8, 8))
         nx.draw(
@@ -132,10 +147,10 @@ class GridGraph:
             pos,
             labels=labels,
             with_labels=True,
-            node_size=500,
+            node_size=1500,
             node_color=node_color,
             font_size=10,
-            font_color="white" if self.get_cell_data(cell) == 10 else "black",
+            font_color="#969696d9",
         )
         plt.show()
 
@@ -162,8 +177,7 @@ class GridGraph:
                 self.data[cell] = data
             else:
                 raise ValueError(
-                    f"Data {data} is not a valid value. Must be None or a \
-                    integer between 0 and 10."
+                    f"Data {data} is not a valid value. Must be None or an integer between 0 and 10."
                 )
         except KeyError:
             raise ValueError(f"Cell {cell} is out of bounds.")
