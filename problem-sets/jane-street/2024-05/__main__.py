@@ -3,6 +3,7 @@ import math
 import copy
 import networkx as nx
 import os
+from functools import lru_cache
 
 
 def generate_masks(n):
@@ -55,6 +56,16 @@ def is_square(n):
         return False
     sqrt_n = int(math.sqrt(n))
     return sqrt_n * sqrt_n == n
+
+
+@lru_cache(None)
+def is_palindrome(num):
+    s = str(num)
+    return s == s[::-1]
+
+
+def is_one_more_than_palindrome(num):
+    return is_palindrome(num - 1)
 
 
 def get_row_array(row_graph: GridGraph, row_length):
@@ -118,10 +129,10 @@ def solve_row(file_name, row_graph: GridGraph, row_rule_checker, row_length):
 grid_graph = GridGraph(filename="graph11.txt")
 
 # row rule checkers
-row_rule_checkers = [is_square]
+row_rule_checkers = [is_square, is_one_more_than_palindrome]
 
 # solve rows
-for r in range(1):
+for r in range(1, 2):
     os.makedirs("solution", exist_ok=True)
     file_name = f"solution/row{r}.txt"
     with open(file_name, "w") as file:
