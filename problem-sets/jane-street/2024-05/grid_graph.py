@@ -91,6 +91,19 @@ class GridGraph:
         # should a check that all cells have the same value be made?
         return self.get_cell_data(region[0])
 
+    def region_data_is_okay(self):
+        region_graph = self.find_region_adjacency
+        for _, data in region_graph.nodes(data=True):
+            region_value = -1
+            for cell in data["cells"]:
+                cell_data = self.get_cell_data(cell)
+                if region_value == -1:
+                    region_value = cell_data
+                else:
+                    if region_value != cell_data:
+                        return False
+        return True
+
     def set_region_data(self, region, data):
         for cell in region:
             self.set_cell_data(cell, data)
