@@ -87,6 +87,20 @@ class GridGraph:
 
         return regions
 
+    def get_region_data(self, region):
+        # should a check that all cells have the same value be made?
+        return self.get_cell_data(region[0])
+
+    def set_region_data(self, region, data):
+        for cell in region:
+            self.set_cell_data(cell, data)
+
+    def get_region_coloring(self, region_graph: nx.Graph):
+        return {
+            node: self.get_region_data(data["cells"])
+            for node, data in region_graph.nodes(data=True)
+        }
+
     def are_regions_adjacent(self, region1, region2):
         for cell1 in region1:
             for cell2 in region2:
@@ -154,7 +168,7 @@ class GridGraph:
         )
         plt.show()
 
-    def visualize_regions(self, region_graph):
+    def visualize_regions(self, region_graph: nx.Graph):
         pos = nx.spring_layout(region_graph)
         labels = {i: f"Region {i+1}" for i in region_graph.nodes()}
 
@@ -175,9 +189,14 @@ class GridGraph:
         try:
             if data is None or (isinstance(data, int) and 0 <= data <= 10):
                 self.data[cell] = data
+                # Remove all edges for value 10s
+                if data == 10:
+                    for neighbor in self.neighbors(cell).copy():
+                        self.remove_edge(cell, neighbor)
             else:
                 raise ValueError(
-                    f"Data {data} is not a valid value. Must be None or an integer between 0 and 10."
+                    f"Data {data} is not a valid value. Must be None or an \
+                    integer between 0 and 10."
                 )
         except KeyError:
             raise ValueError(f"Cell {cell} is out of bounds.")
@@ -220,8 +239,4 @@ class GridGraph:
         for r, row_mask in enumerate(mask):
             for c, char in enumerate(row_mask):
                 if char == "1":
-                    cell = (r, c)
-                    self.set_cell_data(cell, 10)
-                    # Remove all edges for this cell
-                    for neighbor in self.neighbors(cell).copy():
-                        self.remove_edge(cell, neighbor)
+                    self.set_cell_data((r, c), 10)
