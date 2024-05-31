@@ -4,6 +4,8 @@ import copy
 import networkx as nx
 import os
 from functools import lru_cache
+import threading
+import concurrent.futures
 
 
 def generate_masks(n):
@@ -100,29 +102,105 @@ def all_numbers_pass_checker(array, checker):
     return True
 
 
+file_lock = threading.Lock()
+
+
+class CompletedCounter:
+    def __init__(self):
+        self.count = 0
+        self.lock = threading.Lock()
+
+    def increment(self):
+        with self.lock:
+            self.count += 1
+            print(f"Completed masks: {self.count}")
+
+
+def process_mask(
+    file_name,
+    mask,
+    row_graph,
+    row_rule_checker,
+    row_length,
+    counter,
+):
+    masked_graph = copy.deepcopy(row_graph)
+    masked_graph.apply_mask([mask])
+    region_graph = masked_graph.find_region_adjacency()
+    initial_colors = masked_graph.get_region_coloring(region_graph)
+    colors_iter = get_all_colorings(
+        region_graph, 10, initial_colors=initial_colors
+    )
+
+    valid_rows = []
+    for color in colors_iter:
+        color_graph = copy.deepcopy(masked_graph)
+        for node, value in color.items():
+            color_graph.set_region_data(
+                region_graph.nodes[node]["cells"], value
+            )
+        row_array = get_row_array(color_graph, row_length)
+        row_numbers = get_row_numbers(row_array)
+        if all_numbers_pass_checker(row_numbers, row_rule_checker):
+            valid_rows.append(row_array)
+
+    with file_lock:
+        with open(file_name, "a") as file:
+            for row_array in valid_rows:
+                file.write(f"{row_array}\n")
+
+    counter.increment()
+
+
 def solve_row(file_name, row_graph: GridGraph, row_rule_checker, row_length):
-    masks_completed = 0
-    for mask in generate_masks(row_length):
-        masked_graph = copy.deepcopy(row_graph)
-        masked_graph.apply_mask([mask])  # mask is array of rows
-        region_graph = masked_graph.find_region_adjacency()
-        initial_colors = masked_graph.get_region_coloring(region_graph)
-        colors_iter = get_all_colorings(
-            region_graph, 10, initial_colors=initial_colors
-        )
-        for color in colors_iter:
-            color_graph = copy.deepcopy(masked_graph)
-            for node, value in color.items():
-                color_graph.set_region_data(
-                    region_graph.nodes[node]["cells"], value
-                )
-            row_array = get_row_array(color_graph, row_length)
-            row_numbers = get_row_numbers(row_array)
-            if all_numbers_pass_checker(row_numbers, row_rule_checker):
-                with open(file_name, "a") as file:
-                    file.write(f"{row_array}\n")
-        masks_completed = masks_completed + 1
-        print(masks_completed)
+    masks = list(generate_masks(row_length))
+    counter = CompletedCounter()
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
+        futures = [
+            executor.submit(
+                process_mask,
+                file_name,
+                mask,
+                row_graph,
+                row_rule_checker,
+                row_length,
+                counter,
+            )
+            for mask in masks
+        ]
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                future.result()
+            except Exception as e:
+                print(f"Error occurred: {e}")
+
+    print("Processed masks")
+
+
+# def solve_row(file_name, row_graph: GridGraph, row_rule_checker, row_length):
+#     masks_completed = 0
+#     for mask in generate_masks(row_length):
+#         masked_graph = copy.deepcopy(row_graph)
+#         masked_graph.apply_mask([mask])  # mask is array of rows
+#         region_graph = masked_graph.find_region_adjacency()
+#         initial_colors = masked_graph.get_region_coloring(region_graph)
+#         colors_iter = get_all_colorings(
+#             region_graph, 10, initial_colors=initial_colors
+#         )
+#         for color in colors_iter:
+#             color_graph = copy.deepcopy(masked_graph)
+#             for node, value in color.items():
+#                 color_graph.set_region_data(
+#                     region_graph.nodes[node]["cells"], value
+#                 )
+#             row_array = get_row_array(color_graph, row_length)
+#             row_numbers = get_row_numbers(row_array)
+#             if all_numbers_pass_checker(row_numbers, row_rule_checker):
+#                 with open(file_name, "a") as file:
+#                     file.write(f"{row_array}\n")
+#         masks_completed = masks_completed + 1
+#         print(masks_completed)
 
 
 # load base graph
@@ -132,9 +210,9 @@ grid_graph = GridGraph(filename="graph11.txt")
 row_rule_checkers = [is_square, is_one_more_than_palindrome]
 
 # solve rows
-for r in range(1, 2):
+for r in range(1):
     os.makedirs("solution", exist_ok=True)
-    file_name = f"solution/row{r}.txt"
+    file_name = f"solution/row_again{r}.txt"
     with open(file_name, "w") as file:
         file.write("")  # clear file
 
