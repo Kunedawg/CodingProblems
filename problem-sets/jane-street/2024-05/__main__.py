@@ -353,7 +353,7 @@ def generate_combinations(file1_path, file2_path):
 if __name__ == "__main__":
     # Parameters
     solve_rows = True
-    solve_row_range = range(2, 3)  # max 11
+    solve_row_range = range(3, 4)  # max 11
     combine_rows = False
     combine_row_range = range(0)  # max 10
     use_multi_core = True
@@ -380,7 +380,7 @@ if __name__ == "__main__":
     if solve_rows:
         for r in solve_row_range:
             os.makedirs("solution", exist_ok=True)
-            file_name = f"solution/row_new{r}.txt"
+            file_name = f"solution/row{r}.txt"
             with open(file_name, "w") as file:
                 file.write("")  # clear file
 
