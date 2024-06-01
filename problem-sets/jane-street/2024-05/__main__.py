@@ -60,7 +60,7 @@ def is_square(n):
     return sqrt_n * sqrt_n == n
 
 
-@lru_cache(None)
+# @lru_cache(None)
 def is_palindrome(num):
     s = str(num)
     return s == s[::-1]
@@ -142,13 +142,13 @@ def is_multiple_of_88(num):
     return num % 88 == 0
 
 
-@lru_cache(None)
+# @lru_cache(None)
 def is_one_less_than_palindrome(num):
     """Check if a number is one less than a palindrome."""
     return is_palindrome(num + 1)
 
 
-@lru_cache(None)
+# @lru_cache(None)
 def is_one_more_than_palindrome(num):
     return is_palindrome(num - 1)
 
@@ -193,7 +193,7 @@ class CompletedCounter:
     def increment(self):
         with self.lock:
             self.count.value += 1
-            print(f"Completed masks: {self.count.value}")
+            print(f"Completed masks: {self.count.value}", end="")
 
 
 def process_mask(args):
@@ -207,7 +207,9 @@ def process_mask(args):
     )
 
     valid_rows = []
+    colors_done = 0
     for color in colors_iter:
+        colors_done += 1
         color_graph = copy.deepcopy(masked_graph)
         for node, value in color.items():
             color_graph.set_region_data(
@@ -224,6 +226,7 @@ def process_mask(args):
                 file.write(f"{row_array}\n")
 
     counter.increment()
+    print(f" {mask} {colors_done}")
 
 
 def solve_row(
@@ -290,7 +293,7 @@ def generate_combinations(file1_path, file2_path):
 if __name__ == "__main__":
     # Parameters
     solve_rows = True
-    solve_row_range = range(1, 2)  # max 11
+    solve_row_range = range(2, 3)  # max 11
     combine_rows = False
     combine_row_range = range(0)  # max 10
 
@@ -316,7 +319,7 @@ if __name__ == "__main__":
     if solve_rows:
         for r in solve_row_range:
             os.makedirs("solution", exist_ok=True)
-            file_name = f"solution/row_again_again{r}.txt"
+            file_name = f"solution/row{r}.txt"
             with open(file_name, "w") as file:
                 file.write("")  # clear file
 
