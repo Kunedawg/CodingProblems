@@ -6,6 +6,7 @@ import os
 from functools import lru_cache
 import multiprocessing
 from multiprocessing import Manager, Pool
+import time
 
 
 def generate_masks(n):
@@ -193,12 +194,12 @@ class CompletedCounter:
     def increment(self):
         with self.lock:
             self.count.value += 1
-            print(f"Completed masks: {self.count.value}", end="")
 
 
 def process_mask(args):
+    start_time = time.time()
     file_name, mask, row_graph, row_rule_checker, row_length, counter = args
-    masked_graph = copy.deepcopy(row_graph)
+    masked_graph: GridGraph = copy.deepcopy(row_graph)
     masked_graph.apply_mask([mask])
     region_graph = masked_graph.find_region_adjacency()
     initial_colors = masked_graph.get_region_coloring(region_graph)
@@ -207,10 +208,12 @@ def process_mask(args):
     )
 
     valid_rows = []
-    colors_done = 0
-    for color in colors_iter:
-        colors_done += 1
-        color_graph = copy.deepcopy(masked_graph)
+    deepcopy_time = 0
+    for colors_done, color in enumerate(colors_iter):
+        deep_copy_start = time.time()
+        color_graph = masked_graph.custom_copy()
+        deep_copy_end = time.time()
+        deepcopy_time += deep_copy_end - deep_copy_start
         for node, value in color.items():
             color_graph.set_region_data(
                 region_graph.nodes[node]["cells"], value
@@ -226,7 +229,16 @@ def process_mask(args):
                 file.write(f"{row_array}\n")
 
     counter.increment()
-    print(f" {mask} {colors_done}")
+    end_time = time.time()
+
+    print(
+        (
+            f"Completed masks: {counter.count.value}\t"
+            f"mask: {mask}\tnum_of_colors: {colors_done+1}\t"
+            f"Time: {end_time-start_time} s \t"
+            f"DeepT {deepcopy_time} s "
+        )
+    )
 
 
 def solve_row(
@@ -293,7 +305,7 @@ def generate_combinations(file1_path, file2_path):
 if __name__ == "__main__":
     # Parameters
     solve_rows = True
-    solve_row_range = range(2, 3)  # max 11
+    solve_row_range = range(1)  # max 11
     combine_rows = False
     combine_row_range = range(0)  # max 10
 
@@ -319,7 +331,7 @@ if __name__ == "__main__":
     if solve_rows:
         for r in solve_row_range:
             os.makedirs("solution", exist_ok=True)
-            file_name = f"solution/row{r}.txt"
+            file_name = f"solution/row_new{r}.txt"
             with open(file_name, "w") as file:
                 file.write("")  # clear file
 

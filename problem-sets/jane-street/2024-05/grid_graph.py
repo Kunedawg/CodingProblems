@@ -253,3 +253,11 @@ class GridGraph:
             for c, char in enumerate(row_mask):
                 if char == "1":
                     self.set_cell_data((r, c), 10)
+
+    def custom_copy(self):
+        new_graph = GridGraph(rows=self.rows, cols=self.cols)
+        new_graph.adj_list = {
+            cell: neighbors[:] for cell, neighbors in self.adj_list.items()
+        }
+        new_graph.data = {cell: value for cell, value in self.data.items()}
+        return new_graph
