@@ -197,6 +197,7 @@ class CompletedCounter:
 
 
 def process_mask(args):
+    start_time = time.time()
     file_name, mask, row_graph, row_rule_checker, row_length, counter = args
     masked_graph: GridGraph = copy.deepcopy(row_graph)
     masked_graph.apply_mask([mask])
@@ -207,11 +208,13 @@ def process_mask(args):
     )
 
     valid_rows = []
-    colors_done = 0
-    for color in colors_iter:
+    deepcopy_time = 0
+    for colors_done, color in enumerate(colors_iter):
         print(colors_done, end="\r")
-        colors_done += 1
+        deep_copy_start = time.time()
         color_graph = masked_graph.custom_copy()
+        deep_copy_end = time.time()
+        deepcopy_time += deep_copy_end - deep_copy_start
         for node, value in color.items():
             color_graph.set_region_data(
                 region_graph.nodes[node]["cells"], value
@@ -227,7 +230,16 @@ def process_mask(args):
                 file.write(f"{row_array}\n")
 
     counter.increment()
-    print(f" {mask} {colors_done}")
+    end_time = time.time()
+
+    print(
+        (
+            f"Completed masks: {counter.count.value}\t"
+            f"mask: {mask}\tnum_of_colors: {colors_done+1}\t"
+            f"Time: {end_time-start_time} s \t"
+            f"DeepT {deepcopy_time} s "
+        )
+    )
 
 
 def solve_row_single_core(
