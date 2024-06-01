@@ -90,9 +90,13 @@ def is_prime_raised_to_prime_power(num):
     for base in range(2, int(math.sqrt(num)) + 1):
         if is_prime(base):
             power = 1
-            while (base**power) <= num:
-                if base**power == num:
-                    return True
+            while True:
+                num_to_check = base**power
+                if is_prime(power):
+                    if num_to_check == num:
+                        return True
+                if num_to_check > num:
+                    break
                 power += 1
     return False
 
@@ -209,8 +213,17 @@ def process_mask(args):
 
     valid_rows = []
     deepcopy_time = 0
+    # color_end = time.time()
+    # color_sum = 0
+    # num_check_sum = 0
     for colors_done, color in enumerate(colors_iter):
-        print(colors_done, end="\r")
+        # color_start = time.time()
+        # color_sum += color_start - color_end
+        # print(
+        #     f"#{colors_done}\tcolor t: {color_sum}\t"
+        #     f"num_check t: {num_check_sum}",
+        #     end="\r",
+        # )
         deep_copy_start = time.time()
         color_graph = masked_graph.custom_copy()
         deep_copy_end = time.time()
@@ -221,8 +234,11 @@ def process_mask(args):
             )
         row_array = get_row_array(color_graph, row_length)
         row_numbers = get_row_numbers(row_array)
+        # num_check_start = time.time()
         if all_numbers_pass_checker(row_numbers, row_rule_checker):
             valid_rows.append(row_array)
+        # color_end = time.time()
+        # num_check_sum += color_end - num_check_start
 
     with counter.lock:
         with open(file_name, "a") as file:
@@ -331,7 +347,7 @@ if __name__ == "__main__":
     solve_row_range = range(2, 3)  # max 11
     combine_rows = False
     combine_row_range = range(0)  # max 10
-    use_multi_core = False
+    use_multi_core = True
 
     # load base graph
     grid_graph = GridGraph(filename="graph11.txt")
