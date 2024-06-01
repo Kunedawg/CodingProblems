@@ -197,7 +197,6 @@ class CompletedCounter:
 
 
 def process_mask(args):
-    start_time = time.time()
     file_name, mask, row_graph, row_rule_checker, row_length, counter = args
     masked_graph: GridGraph = copy.deepcopy(row_graph)
     masked_graph.apply_mask([mask])
@@ -208,12 +207,11 @@ def process_mask(args):
     )
 
     valid_rows = []
-    deepcopy_time = 0
-    for colors_done, color in enumerate(colors_iter):
-        deep_copy_start = time.time()
+    colors_done = 0
+    for color in colors_iter:
+        print(colors_done, end="\r")
+        colors_done += 1
         color_graph = masked_graph.custom_copy()
-        deep_copy_end = time.time()
-        deepcopy_time += deep_copy_end - deep_copy_start
         for node, value in color.items():
             color_graph.set_region_data(
                 region_graph.nodes[node]["cells"], value
@@ -229,16 +227,29 @@ def process_mask(args):
                 file.write(f"{row_array}\n")
 
     counter.increment()
-    end_time = time.time()
+    print(f" {mask} {colors_done}")
 
-    print(
-        (
-            f"Completed masks: {counter.count.value}\t"
-            f"mask: {mask}\tnum_of_colors: {colors_done+1}\t"
-            f"Time: {end_time-start_time} s \t"
-            f"DeepT {deepcopy_time} s "
-        )
-    )
+
+def solve_row_single_core(
+    file_name, row_graph, row_rule_checker, row_length, num_processes=None
+):
+    # masks = list(generate_masks(row_length))
+    masks = ["00000100100"]
+    # masks = ["00000000000"]
+    with Manager() as manager:
+        counter = CompletedCounter(manager)
+        for mask in masks:
+            args = (
+                file_name,
+                mask,
+                row_graph,
+                row_rule_checker,
+                row_length,
+                counter,
+            )
+            process_mask(args)
+
+    print(f"Processed {len(masks)} masks")
 
 
 def solve_row(
@@ -305,9 +316,10 @@ def generate_combinations(file1_path, file2_path):
 if __name__ == "__main__":
     # Parameters
     solve_rows = True
-    solve_row_range = range(1)  # max 11
+    solve_row_range = range(2, 3)  # max 11
     combine_rows = False
     combine_row_range = range(0)  # max 10
+    use_multi_core = False
 
     # load base graph
     grid_graph = GridGraph(filename="graph11.txt")
@@ -337,7 +349,11 @@ if __name__ == "__main__":
 
             row_graph = grid_graph.create_subset((r, 0), 1, 11)
             rule_checker = row_rule_checkers[r]
-            solve_row(file_name, row_graph, rule_checker, 11)
+            if use_multi_core:
+                solve_row(file_name, row_graph, rule_checker, 11)
+            else:
+                solve_row_single_core(file_name, row_graph, rule_checker, 11)
+
             print(f"Row {r}: complete")
 
     # combine rows
