@@ -7,6 +7,7 @@ from functools import lru_cache
 import multiprocessing
 from multiprocessing import Manager, Pool
 import time
+from prime_to_prime.prime_power_checker import PrimePowerChecker
 
 
 def generate_masks(n):
@@ -99,6 +100,14 @@ def is_prime_raised_to_prime_power(num):
                     break
                 power += 1
     return False
+
+
+prime_power_checker = PrimePowerChecker()
+
+
+def is_prime_raised_to_prime_power2(num):
+    """Check if a number is a prime raised to a prime power."""
+    return prime_power_checker.is_prime_power(num)
 
 
 @lru_cache(None)
@@ -356,7 +365,7 @@ if __name__ == "__main__":
     row_rule_checkers = [
         is_square,
         is_one_more_than_palindrome,
-        is_prime_raised_to_prime_power,
+        is_prime_raised_to_prime_power2,
         is_digits_sum_to_7,
         is_fibonacci,
         is_square,
