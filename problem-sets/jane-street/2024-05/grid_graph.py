@@ -92,7 +92,7 @@ class GridGraph:
         return self.get_cell_data(region[0])
 
     def region_data_is_okay(self):
-        region_graph = self.find_region_adjacency
+        region_graph = self.find_region_adjacency()
         for _, data in region_graph.nodes(data=True):
             region_value = -1
             for cell in data["cells"]:

@@ -129,6 +129,23 @@ def is_fibonacci(num):
     )
 
 
+def precompute_fibonacci(limit):
+    fib_set = set()
+    a, b = 0, 1
+    while a <= limit:
+        fib_set.add(a)
+        a, b = b, a + b
+    return fib_set
+
+
+# Precompute Fibonacci numbers up to 100,000,000,000
+fib_set = precompute_fibonacci(100000000000)
+
+
+def is_fibonacci2(num):
+    return num in fib_set
+
+
 @lru_cache(None)
 def is_multiple_of_37(num):
     """Check if a number is a multiple of 37."""
@@ -333,7 +350,10 @@ def read_file_generator(file_path):
     """Reads a file line by line and yields each line as a list of integers."""
     with open(file_path, "r") as file:
         for line in file:
-            yield list(map(int, line.strip().split(",")))
+            # Remove the square brackets and strip any whitespace
+            line = line.strip().strip("[]")
+            # Convert the remaining string to a list of integers
+            yield list(map(int, line.split(",")))
 
 
 def generate_combinations(file1_path, file2_path):
@@ -352,10 +372,10 @@ def generate_combinations(file1_path, file2_path):
 
 if __name__ == "__main__":
     # Parameters
-    solve_rows = True
-    solve_row_range = range(3, 4)  # max 11
-    combine_rows = False
-    combine_row_range = range(0)  # max 10
+    solve_rows = False
+    solve_row_range = range(4, 5)  # max 11
+    combine_rows = True
+    combine_row_range = range(1)  # max 10
     use_multi_core = True
 
     # load base graph
@@ -367,7 +387,7 @@ if __name__ == "__main__":
         is_one_more_than_palindrome,
         is_prime_raised_to_prime_power2,
         is_digits_sum_to_7,
-        is_fibonacci,
+        is_fibonacci2,
         is_square,
         is_multiple_of_37,
         is_palindrome_and_multiple_of_23,
@@ -407,23 +427,33 @@ if __name__ == "__main__":
                 file_top = f"solution/combine{r}.txt"
                 file_bottom = f"solution/row{r+1}.txt"
             combinations = generate_combinations(file_top, file_bottom)
-            sub_graph: GridGraph = grid_graph.create_subset((0, 0), r + 1, 11)
+            sub_graph: GridGraph = grid_graph.create_subset((0, 0), r + 2, 11)
             # Print combinations
-            for combo in combinations:
+            for i, combo in enumerate(combinations):
+                print(i, r)
                 top, bot = combo
                 if r == 0:
                     potential_solution = [top, bot]
                 else:
                     potential_solution = top.append(bot)
-                if not are_blacks_sparse(potential_solution[-2:]):
-                    continue
-                test_graph = copy.deepcopy(sub_graph)
-                for r, row in enumerate(potential_solution):
+                try:
+                    if not are_blacks_sparse(potential_solution[-2:]):
+                        continue
+                except Exception as e:
+                    print(f"row {r}")
+                    print(combo)
+                    raise e
+                test_graph = sub_graph.custom_copy()
+                for r_, row in enumerate(potential_solution):
                     for c, data in enumerate(row):
-                        test_graph.set_cell_data((r, c), data)
+                        try:
+                            test_graph.set_cell_data((r_, c), data)
+                        except Exception as e:
+                            test_graph.visualize()
+                            raise e
 
-                if test_graph.region_data_is_okay:
+                if test_graph.region_data_is_okay():
                     with open(file_name, "a") as file:
                         file.write(f"{potential_solution}\n")
-
-                print(combo)
+                        print(potential_solution)
+                        # test_graph.visualize()
